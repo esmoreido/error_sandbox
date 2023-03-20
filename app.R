@@ -8,7 +8,6 @@
 #
 
 library(shiny)
-library(hydroGOF)
 library(ggplot2)
 library(dplyr)
 library(tidyverse)
@@ -56,10 +55,11 @@ server <- function(input, output) {
   })
   
   err <- reactive({
-    rmse <- rmse(sim = dat()$q_mod, obs = dat()$q_fact)
-    nse <- NSE(sim = dat()$q_mod, obs = dat()$q_fact)
+    # rmse <- rmse(sim = dat()$q_mod, obs = dat()$q_fact)
+    # nse <- NSE(sim = dat()$q_mod, obs = dat()$q_fact)
     cor <- cor(y = dat()$q_mod, x = dat()$q_fact)
-    err <- data.frame(rmse, nse, cor)
+    # err <- data.frame(rmse, nse, cor)
+    err <- data.frame(cor)
   })
     output$hydrograph <- renderPlot({
       ggplot(dat(), aes(x=date)) + 
