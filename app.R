@@ -11,6 +11,8 @@ library(shiny)
 library(ggplot2)
 library(dplyr)
 library(tidyverse)
+library(hydroGOF)
+library(reshape2)
 library(lubridate)
 
 df <- read.csv('qdata.csv', 
@@ -22,8 +24,8 @@ ui <- fluidPage(
 
     # Application title
     titlePanel("Ошибки гидрологического моделирования"),
-
-    # Sidebar with a slider input for number of bins 
+    tabsetPanel(
+      tabPanel("Гидрограф",
     sidebarLayout(
         sidebarPanel(
             sliderInput("err_mean",
@@ -32,19 +34,38 @@ ui <- fluidPage(
             sliderInput("err_sd",
                         "Дисперсия случайной ошибки:",
                         min = 0, max = 3, value = 0, step = 0.1),
-            tableOutput("table")
+            # tableOutput("table"),
+            tableOutput("errtable")
         ),
 
-        # Show a plot of the generated distribution
         mainPanel(
            plotOutput("hydrograph"),
            plotOutput("scatterplot")
         )
     )
+  ),
+  tabPanel("Графики ошибок",
+           mainPanel(
+                     plotOutput("ugraph"),
+                     plotOutput("sdgraph"))
+           ),
+  tabPanel("Матрицы",
+           mainPanel(
+             plotOutput("heatmap"))
+  )
+    )
 )
 
 server <- function(input, output) {
   
+  count <- reactiveValues(count = 0)
+  
+  rval <- reactiveValues(df = data.frame()) 
+  
+  observeEvent(input$err_mean & input$err_sd, {
+    count$count <- count$count + 1
+    rval$df <- rbind(rval$df, err())
+  } )
   
   dat <- reactive({
     q <- df %>%
@@ -55,26 +76,45 @@ server <- function(input, output) {
   })
   
   err <- reactive({
-    # rmse <- rmse(sim = dat()$q_mod, obs = dat()$q_fact)
-    # nse <- NSE(sim = dat()$q_mod, obs = dat()$q_fact)
+    rmse <- rmse(sim = dat()$q_mod, obs = dat()$q_fact)
+    nse <- NSE(sim = dat()$q_mod, obs = dat()$q_fact)
     cor <- cor(y = dat()$q_mod, x = dat()$q_fact)
-    # err <- data.frame(rmse, nse, cor)
-    err <- data.frame(cor)
+    kge <- KGE(sim = dat()$q_mod, obs = dat()$q_fact)
+    err <- data.frame(n = count$count, u = input$err_mean, 
+                      sd = input$err_sd,
+                      RMSE = rmse, NSE = nse, R = cor, KGE = kge)
   })
+  
+  
     output$hydrograph <- renderPlot({
       ggplot(dat(), aes(x=date)) + 
         geom_line(aes(y=q_fact, col='Факт'), size=1) + 
-        geom_line(aes(y=q_mod, col='Модель'), size = 1, type = 'dash') + 
+        geom_line(aes(y=q_mod, col='Модель'), size = 1) + 
         labs(x='', y=expression('Расход воды, м'^3*'/с')) + 
         theme_light(base_size = 16) + scale_x_date(date_breaks = '1 month', date_labels = '%b')
     })
+    
     output$scatterplot <- renderPlot({
       ggplot(dat(), aes(x=q_fact, y=q_mod)) + geom_point() + 
         geom_abline() + labs(x='Факт', y='Модель') + 
         geom_smooth(method = 'lm', se = F) + 
         xlim(0, 60) + ylim(0,60) + theme_light(base_size = 16)
     })
-    output$table <- renderTable(err())
+    
+    output$ugraph <- renderPlot({
+      ggplot(melt(rval$df[,-3], id.vars = c('n', 'u')), aes(x=u, y=value, col=variable)) + 
+        geom_line() + geom_point() + facet_wrap(variable~., scales='free_y', ncol = 2)
+    })
+    output$sdgraph <- renderPlot({
+      ggplot(melt(rval$df[,-2], id.vars = c('n', 'sd')), aes(x=sd, y=value, col=variable)) + 
+        geom_line() + geom_point() + facet_wrap(variable~., scales='free_y', ncol = 2)
+    })
+    output$heatmap <- renderPlot({
+      ggplot(melt(rval$df, id.vars = c('n', 'u', 'sd')), aes(x=u, y=sd, fill=value)) + 
+      geom_tile() + facet_wrap(variable~., ncol = 2)
+    })
+    # output$table <- renderTable(err())
+    output$errtable <- renderTable(rval$df)
 }
 
 # Run the application 
