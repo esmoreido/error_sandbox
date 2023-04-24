@@ -11,7 +11,7 @@ library(shiny)
 library(ggplot2)
 library(dplyr)
 library(tidyverse)
-library(hydroGOF)
+# library(hydroGOF)
 library(reshape2)
 library(lubridate)
 
@@ -76,10 +76,12 @@ server <- function(input, output) {
   })
   
   err <- reactive({
-    rmse <- rmse(sim = dat()$q_mod, obs = dat()$q_fact)
-    nse <- NSE(sim = dat()$q_mod, obs = dat()$q_fact)
+    # rmse <- rmse(sim = dat()$q_mod, obs = dat()$q_fact)
+    rmse <- dat() %>%
+      mutate(rmse = sqrt(sum((q_fact - q_mod)^2)))
+    # nse <- NSE(sim = dat()$q_mod, obs = dat()$q_fact)
     cor <- cor(y = dat()$q_mod, x = dat()$q_fact)
-    kge <- KGE(sim = dat()$q_mod, obs = dat()$q_fact)
+    # kge <- KGE(sim = dat()$q_mod, obs = dat()$q_fact)
     err <- data.frame(n = count$count, u = input$err_mean, 
                       sd = input$err_sd,
                       RMSE = rmse, NSE = nse, R = cor, KGE = kge)
