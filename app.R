@@ -105,15 +105,17 @@ server <- function(input, output) {
     
     output$ugraph <- renderPlot({
       ggplot(melt(rval$df[,-3], id.vars = c('n', 'u')), aes(x=u, y=value, col=variable)) + 
-        geom_line() + geom_point() + facet_wrap(variable~., scales='free_y', ncol = 2)
+        geom_line() + geom_point() + facet_wrap(variable~., scales='free_y', ncol = 2) + 
+        theme_light(base_size = 20)
     })
     output$sdgraph <- renderPlot({
       ggplot(melt(rval$df[,-2], id.vars = c('n', 'sd')), aes(x=sd, y=value, col=variable)) + 
-        geom_line() + geom_point() + facet_wrap(variable~., scales='free_y', ncol = 2)
+        geom_line() + geom_point() + facet_wrap(variable~., scales='free_y', ncol = 2) + 
+        theme_light(base_size = 20)
     })
     output$heatmap <- renderPlot({
       ggplot(melt(rval$df, id.vars = c('n', 'u', 'sd')), aes(x=u, y=sd, fill=value)) + 
-      geom_tile() + facet_wrap(variable~., ncol = 2)
+      geom_tile() + facet_wrap(variable~., ncol = 2) + theme_light(base_size = 20)
     })
     # output$table <- renderTable(err())
     output$errtable <- renderTable(rval$df)
