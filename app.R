@@ -77,8 +77,7 @@ server <- function(input, output) {
   
   err <- reactive({
     # rmse <- rmse(sim = dat()$q_mod, obs = dat()$q_fact)
-    rmse <- dat() %>%
-      mutate(rmse = sqrt(sum((q_fact - q_mod)^2)))
+    rmse <- sqrt(sum((dat()$q_fact - dat()$q_mod)^2))
     # nse <- NSE(sim = dat()$q_mod, obs = dat()$q_fact)
     cor <- cor(y = dat()$q_mod, x = dat()$q_fact)
     # kge <- KGE(sim = dat()$q_mod, obs = dat()$q_fact)
