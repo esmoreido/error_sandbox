@@ -84,14 +84,15 @@ server <- function(input, output) {
     # kge <- KGE(sim = dat()$q_mod, obs = dat()$q_fact)
     err <- data.frame(n = count$count, u = input$err_mean, 
                       sd = input$err_sd,
-                      RMSE = rmse, NSE = nse, R = cor, KGE = kge)
+                      RMSE = rmse, R = cor)
+                      # RMSE = rmse, NSE = nse, R = cor, KGE = kge)
   })
   
   
     output$hydrograph <- renderPlot({
       ggplot(dat(), aes(x=date)) + 
-        geom_line(aes(y=q_fact, col='Факт'), size=1) + 
-        geom_line(aes(y=q_mod, col='Модель'), size = 1) + 
+        geom_line(aes(y=q_fact, col='Факт'), linewidth = 1) + 
+        geom_line(aes(y=q_mod, col='Модель'), linewidth = 1) + 
         labs(x='', y=expression('Расход воды, м'^3*'/с')) + 
         theme_light(base_size = 16) + scale_x_date(date_breaks = '1 month', date_labels = '%b')
     })
